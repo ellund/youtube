@@ -5619,11 +5619,43 @@ exports.parseFormats = function (info) {
     formats = formats.concat(info.adaptive_fmts.split(','));
   }
 
+
+  if (info.player_response.streamingData.formats) {
+    var fmts = info.player_response.streamingData.formats;
+
+    for(var i = 0; i < fmts.length; i++) {
+
+      if(fmts[i].mimeType.indexOf('mp4') !== -1) {
+
+        var obj_keys = Object.keys(fmts[i]);
+
+        var attrs = [];
+
+        for(var j = 0; j < obj_keys.length; j++) {
+
+          attrs[j] = obj_keys[j] + '=' + fmts[i][obj_keys[j]];
+
+        }
+
+        formats[i] = attrs.join('&');
+      }
+    }
+  }
+
+
   formats = formats.map(function (format) {
     return qs.parse(format);
   });
   delete info.url_encoded_fmt_stream_map;
   delete info.adaptive_fmts;
+
+  for(var i = 0; i < formats.length; i++) {
+
+    try {
+      formats[i].url = fmts[i].url;
+    } catch(e) {}
+
+  }
 
   return formats;
 };
