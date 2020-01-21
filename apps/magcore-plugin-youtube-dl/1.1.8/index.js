@@ -5612,13 +5612,6 @@ exports.validateURL = function (string) {
  */
 exports.parseFormats = function (info) {
   var formats = [];
-  if (info.url_encoded_fmt_stream_map) {
-    formats = formats.concat(info.url_encoded_fmt_stream_map.split(','));
-  }
-  if (info.adaptive_fmts) {
-    formats = formats.concat(info.adaptive_fmts.split(','));
-  }
-
 
   if (info.player_response.streamingData.formats) {
     var fmts = info.player_response.streamingData.formats;
@@ -5633,8 +5626,20 @@ exports.parseFormats = function (info) {
 
         for(var j = 0; j < obj_keys.length; j++) {
 
-          attrs[j] = obj_keys[j] + '=' + fmts[i][obj_keys[j]];
+          if(obj_keys[j] == 'cipher') {
 
+            var cipher = qs.parse(fmts[i].cipher)
+
+            attrs[j] = 'url=' + cipher.url;
+            fmts[i].url = cipher.url;
+            attrs[obj_keys.length] = 'sp=sig';
+            attrs[obj_keys.length + 1] = 's=' + cipher.s;
+
+          } else {
+
+            attrs[j] = obj_keys[j] + '=' + fmts[i][obj_keys[j]];
+
+          }
         }
 
         formats[i] = attrs.join('&');
@@ -5646,8 +5651,7 @@ exports.parseFormats = function (info) {
   formats = formats.map(function (format) {
     return qs.parse(format);
   });
-  delete info.url_encoded_fmt_stream_map;
-  delete info.adaptive_fmts;
+
 
   for(var i = 0; i < formats.length; i++) {
 
@@ -5656,6 +5660,7 @@ exports.parseFormats = function (info) {
     } catch(e) {}
 
   }
+
 
   return formats;
 };
